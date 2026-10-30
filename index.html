@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CAMC MOBILE</title>
+    <!-- Мета-теги для PWA режима -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --camc-green: #113f2d;
+            --camc-light-green: #1e5c43;
+            --bg-canvas: #f5f7f6;
+            --white: #ffffff;
+            --text-dark: #1e293b;
+            --status-yellow: #f59e0b;
+            --status-red: #ef4444;
+            --status-green: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0; background-color: #cbd5e1;
+            display: flex; justify-content: center; min-height: 100vh;
+        }
+
+        .phone-wrapper {
+            width: 100%; max-width: 430px; background-color: var(--bg-canvas);
+            display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+
+        /* Шапка приложения строго по регламенту ТЗ */
+        .fixed-header {
+            background-color: var(--camc-green); color: var(--white);
+            padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); z-index: 100;
+        }
+
+        .fixed-header .brand-title {
+            font-size: 16px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2;
+        }
+
+        .fixed-header .brand-sub {
+            font-size: 9px; font-weight: 400; color: #a7f3d0; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+
+        .lang-trigger {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            color: var(--white); font-size: 11px; font-weight: 700; padding: 6px 12px;
+            border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: 0.2s;
+        }
+
+        .lang-trigger:border { background: rgba(255,255,255,0.25); }
+
+        /* Контентная зона и экраны */
+        .app-content { flex: 1; display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
+        .app-screen { display: none; flex-direction: column; height: 100%; }
+        .app-screen.active { display: flex; }
+
+        /* Элементы управления и формы */
+        .form-card {
+            background: var(--white); border-radius: 16px; padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 20px;
+        }
+
+        .form-title { font-size: 18px; font-weight: 700; color: var(--camc-green); margin: 0 0 20px 0; text-align: center; }
+        .input-box { margin-bottom: 16px; }
+        .input-box label { display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+        
+        .input-box input, .input-box select {
+            width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px;
+            font-size: 14px; box-sizing: border-box; outline: none; transition: 0.2s; color: var(--text-dark);
+        }
+
+        .input-box input:focus, .input-box select:focus { border-color: var(--camc-light-green); box-shadow: 0 0 0 3px rgba(30,92,67,0.15); }
+        .action-btn {
+            background: var(--camc-green); color: var(--white); border: none; width: 100%; padding: 14px;
+            border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .action-btn:active { background: #0a271c; transform: scale(0.99); }
+
+        /* Главный экран и виджеты */
+        .user-badge {
+            background: linear-gradient(135deg, var(--camc-green), var(--camc-light-green));
+            color: var(--white); padding: 16px; border-radius: 14px; box-shadow: 0 10px 15px -3px rgba(17,63,45,0.2);
+            margin-bottom: 16px;
+        }
+        .user-badge h3 { margin: 0 0 4px 0; font-size: 16px; font-weight: 700; }
+        .user-badge p { margin: 0; font-size: 12px; opacity: 0.85; }
+
+        .system-alert {
+            background-color: var(--white); border-left: 4px solid var(--status-yellow);
+            border-radius: 8px; padding: 12px 16px; font-size: 12px; line-height: 1.5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 14px;
+        }
+
+        .sys-box-blink {
+            background-color: #fef2f2; border: 2px solid var(--status-red); border-radius: 8px;
+            padding: 12px; font-size: 12px; text-align: center; font-weight: 700;
+            animation: appBlink 2s infinite alternate; margin-bottom: 14px;
+        }
+
+        @keyframes appBlink {
+            0% { border-color: var(--status-red); background-color: #fef2f2; color: var(--status-red); }
+            100% { border-color: var(--status-green); background-color: #ecfdf5; color: var(--status-green); }
+        }
+
+        /* Сетка функциональных модулей по ТЗ */
+        .modules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .module-tile {
+            background: var(--white); border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 16px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: 0.15s;
+        }
+        .module-tile:active { transform: translateY(1px); box-shadow: none; }
+        .module-tile .icon-frame { font-size: 24px; margin-bottom: 8px; }
+
+        /* Идентификатор автономности */
+        .network-pill {
+            text-align: center; font-size: 11px; font-weight: 700; padding: 6px;
+            border-radius: 20px; margin-bottom: 12px;
+        }
+        .network-pill.online { background: #dcfce7; color: #15803d; }
+        .network-pill.offline { background: #fee2e2; color: #b91c1c; }
+
+        /* Сканер кнопочный */
+        .center-scan-deck { text-align: center; margin: 16px 0; }
+        .scan-trigger-circle {
+            width: 72px; height: 72px; background: #fae8ff; border: 2px dashed #a855f7;
+            border-radius: 50%; display: inline-flex; flex-direction: column; align-items: center;
+            justify-content: center; cursor: pointer; color: #7e22ce; font-weight: 800; font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-wrapper">
+    <!-- Шапка ТЗ: Только название, подзаголовок организации и селектор языков напротив -->
+    <div class="fixed-header">
+        <div>
+            <div class="brand-title">CAMC MOBILE</div>
+            <div class="brand-sub">Central Asia Mining Co.</div>
+        </div>
+        <button class="lang-trigger" id="langNode" onclick="rotateLanguage()">РУС</button>
+    </div>
+
+    <div class="app-content">
+        <!-- Индикатор статуса локальной синхронизации БД / Сети -->
+        <div id="netStatusNode" class="network-pill online">РЕЖИМ СВЯЗИ: ОНЛАЙН</div>
+
+        <!-- ЭКРАН 1: Авторизация и переключение Первый вход -->
+        <div id="screenGate" class="app-screen active">
+            <div class="form-card">
+                <div class="form-title" id="gateTitle">Авторизация</div>
+                
+                <div class="input-box">
+                    <label id="lblFio">Выберите ФИО из списка кадровой службы</label>
+                    <select id="gateFioSelect"><option value="">Загрузка списка...</option></select>
+                </div>
+
+                <div class="input-box">
+                    <label id="lblPin">Ведите PIN-код (6-10 цифр)</label>
+                    <input type="password" id="gatePinInput" placeholder="••••••">
+                </div>
+
+                <button class="action-btn" onclick="submitGateAction()" id="btnGateAction">Войти в систему</button>
+                <div style="text-align: center; margin-top: 16px;">
+                    <a href="#" style="font-size: 12px; color: var(--camc-light-green); font-weight: 700;" id="lnkToggleGate" onclick="toggleGateMode(event)">Первый вход / Создать PIN</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 2: Главная рабочая панель -->
+        <div id="screenDashboard" class="app-screen">
+            <div class="user-badge">
+                <h3 id="dashFio">ФИО</h3>
+                <p id="dashMeta">Должность • Участок</p>
+            </div>
+
+            <div class="system-alert">
+                <b id="lblSysAnn">Системное объявление компании:</b><br>
+                <span id="txtSysAnn">Вниманию дежурных смен! Все технологические транзакции регистрировать исключительно через QR-метки терминалов.</span>
+            </div>
+
+            <div class="sys-box-blink" id="lblBlinkBox">
+                Ожидание поступления корпоративных уведомлений / заявок
+            </div>
+
+            <div class="center-scan-deck">
+                <div class="scan-trigger-circle" onclick="triggerQrInterception()">
+                    <span>СКАН</span>
+                    <span>QR</span>
+                </div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 10px;" id="lblModulesHeader">Ваши разрешенные модули</div>
+            <div class="modules-grid" id="dashboardModulesGrid"></div>
+
+            <button class="action-btn" style="background: #64748b; margin-top: 24px;" onclick="logOutUser()" id="btnExit">Выйти из профиля</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Точка подключения к вашей серверной инфраструктуре Google Sheets API
+    const CONFIG_BACKEND_URL = https://script.google.com/macros/s/AKfycbwsrTDDq4E4u2YlqPcOKyJl0cbUZEpEw3sFiSmAZAjtkuC09UZaoswXi1UXQGI7VssA/exec;
+
+    // Языковые пакеты локализации интерфейса
+    const LANG_PACKS = {
