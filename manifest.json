@@ -1,0 +1,17 @@
+```json
+{
+  "short_name": "CAMC",
+  "name": "CAMC MOBILE SYSTEM",
+  "icons": [
+    {
+      "src": "https://icons8.com",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#113f2d",
+  "theme_color": "#113f2d",
+  "display": "standalone",
+  "orientation": "portrait"
+}
